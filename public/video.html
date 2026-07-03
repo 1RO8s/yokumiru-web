@@ -52,15 +52,15 @@
           modestbranding: '1',
           controls: '1',
           disablekb: '1',
-          fs: '0',
+          fs: '1',
           iv_load_policy: '3',
           enablejsapi: '1',
           origin: window.location.origin,
         });
         const iframe = document.createElement('iframe');
         iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?${embedParams.toString()}`;
-        iframe.allow = 'encrypted-media';
-        iframe.allowFullscreen = false;
+        iframe.allow = 'encrypted-media; fullscreen; picture-in-picture';
+        iframe.allowFullscreen = true;
         iframe.referrerPolicy = 'origin-when-cross-origin';
         iframe.sandbox = 'allow-scripts allow-same-origin allow-presentation';
         iframe.id = 'youtube-player';
