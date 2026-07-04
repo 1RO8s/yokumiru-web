@@ -57,6 +57,9 @@
           enablejsapi: '1',
           origin: window.location.origin,
         });
+        if (params.get('autoplay') === '1') {
+          embedParams.set('autoplay', '1');
+        }
         const iframe = document.createElement('iframe');
         iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?${embedParams.toString()}`;
         iframe.allow = 'encrypted-media; fullscreen; picture-in-picture';
