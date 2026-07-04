@@ -62,7 +62,7 @@
         }
         const iframe = document.createElement('iframe');
         iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?${embedParams.toString()}`;
-        iframe.allow = 'encrypted-media; fullscreen; picture-in-picture';
+        iframe.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
         iframe.allowFullscreen = true;
         iframe.referrerPolicy = 'origin-when-cross-origin';
         iframe.sandbox = 'allow-scripts allow-same-origin allow-presentation';
