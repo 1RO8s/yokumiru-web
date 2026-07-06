@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ヨクミル - セクションを取り込む</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --primary: #0a84ff;
+        --bg: #ffffff;
+        --card: rgba(15, 15, 15, 0.05);
+        --text: #0f0f0f;
+        --muted: rgba(15, 15, 15, 0.55);
+        --border: rgba(15, 15, 15, 0.15);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f0f0f;
+          --card: rgba(255, 255, 255, 0.08);
+          --text: #ffffff;
+          --muted: rgba(255, 255, 255, 0.58);
+          --border: rgba(255, 255, 255, 0.2);
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Segoe UI', sans-serif;
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+      }
+      main {
+        width: 100%;
+        max-width: 420px;
+        padding: 28px 20px 40px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 28px;
+        font-weight: 700;
+        font-size: 16px;
+      }
+      .brand-icon {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .brand-icon svg {
+        width: 13px;
+        height: 13px;
+        fill: #fff;
+      }
+      .eyebrow {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 0 0 4px;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 2px;
+        line-height: 1.4;
+      }
+      .count {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 0 0 18px;
+      }
+      .videos {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+      .video {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--card);
+        border-radius: 10px;
+        padding: 8px;
+      }
+      .video img {
+        width: 96px;
+        height: 54px;
+        border-radius: 7px;
+        object-fit: cover;
+        background: #000;
+        flex-shrink: 0;
+      }
+      .video span {
+        font-size: 13px;
+        color: var(--muted);
+        word-break: break-all;
+      }
+      .button {
+        display: block;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 13px;
+        padding: 14px;
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .button.primary {
+        background: var(--primary);
+        color: #fff;
+      }
+      .button.secondary {
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .note {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+        line-height: 1.7;
+        margin-top: 16px;
+      }
+      .error {
+        background: var(--card);
+        border-radius: 12px;
+        padding: 20px;
+        font-size: 14px;
+        line-height: 1.8;
+        color: var(--muted);
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </span>
+        ヨクミル
+      </div>
+
+      <section id="content" class="hidden">
+        <p class="eyebrow">共有されたセクション / Shared section</p>
+        <h1 id="section-title"></h1>
+        <p class="count" id="section-count"></p>
+        <div class="videos" id="videos"></div>
+        <a class="button primary" id="open-app" href="#">アプリで取り込む / Open in app</a>
+        <a class="button secondary" href="#" onclick="return false;">App Storeでダウンロード（近日公開）/ App Store (coming soon)</a>
+        <p class="note">
+          アプリをインストール済みの場合は「アプリで取り込む」をタップしてください。<br />
+          If the app is installed, tap "Open in app" to import this section.
+        </p>
+      </section>
+
+      <section id="error" class="error hidden">
+        この共有リンクは正しくありません。リンクの送り主に確認してください。<br />
+        This share link is not valid. Please check with the person who sent it.
+      </section>
+    </main>
+
+    <script>
+      const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+      const VIDEO_ID_PATTERN = /^[a-zA-Z0-9_-]{6,20}$/;
+      const MAX_VIDEOS = 30;
+
+      function decodeBase64Url(input) {
+        const normalized = input.replace(/-/g, '+').replace(/_/g, '/').replace(/=+$/, '');
+        if (!/^[A-Za-z0-9+/]*$/.test(normalized)) {
+          return null;
+        }
+
+        const bytes = [];
+        let buffer = 0;
+        let bits = 0;
+        for (const char of normalized) {
+          buffer = (buffer << 6) | ALPHABET.indexOf(char);
+          bits += 6;
+          if (bits >= 8) {
+            bits -= 8;
+            bytes.push((buffer >> bits) & 255);
+          }
+        }
+
+        try {
+          return decodeURIComponent(bytes.map((byte) => `%${byte.toString(16).padStart(2, '0')}`).join(''));
+        } catch {
+          return null;
+        }
+      }
+
+      function parsePayload(data) {
+        const decoded = data && decodeBase64Url(data);
+        if (!decoded) {
+          return null;
+        }
+
+        try {
+          const parsed = JSON.parse(decoded);
+          if (parsed.v !== 1 || typeof parsed.t !== 'string' || !Array.isArray(parsed.ids)) {
+            return null;
+          }
+
+          const title = parsed.t.trim().slice(0, 50);
+          const ids = [...new Set(parsed.ids.filter((id) => typeof id === 'string' && VIDEO_ID_PATTERN.test(id)))];
+          if (!title || ids.length === 0 || parsed.ids.length > MAX_VIDEOS) {
+            return null;
+          }
+
+          return { title, ids };
+        } catch {
+          return null;
+        }
+      }
+
+      const data = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('d');
+      const payload = parsePayload(data);
+
+      if (!payload) {
+        document.getElementById('error').classList.remove('hidden');
+      } else {
+        document.getElementById('section-title').textContent = payload.title;
+        document.getElementById('section-count').textContent =
+          `動画${payload.ids.length}本 / ${payload.ids.length} video${payload.ids.length > 1 ? 's' : ''}`;
+
+        const list = document.getElementById('videos');
+        for (const id of payload.ids.slice(0, 10)) {
+          const row = document.createElement('div');
+          row.className = 'video';
+          const img = document.createElement('img');
+          img.src = `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+          img.alt = '';
+          img.loading = 'lazy';
+          row.appendChild(img);
+          list.appendChild(row);
+        }
+        if (payload.ids.length > 10) {
+          const more = document.createElement('div');
+          more.className = 'video';
+          const label = document.createElement('span');
+          label.textContent = `ほか${payload.ids.length - 10}本 / +${payload.ids.length - 10} more`;
+          more.appendChild(label);
+          list.appendChild(more);
+        }
+
+        document.getElementById('open-app').href = `ytplaylist://import?d=${encodeURIComponent(data)}`;
+        document.getElementById('content').classList.remove('hidden');
+      }
+    </script>
+  </body>
+</html>
